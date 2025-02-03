@@ -335,16 +335,29 @@ export class DeviceTracker extends BaseDeviceTracker<GoogDeviceDescriptor, never
         });
 
         if (DeviceTracker.CREATE_DIRECT_LINKS) {
-            const name = `${DeviceTracker.AttributePrefixPlayerFor}${fullName}`;
-            StreamClientScrcpy.getPlayers().forEach((playerClass) => {
-                const { playerCodeName, playerFullName } = playerClass;
-                const playerTd = document.createElement('div');
-                playerTd.classList.add(blockClass);
-                playerTd.setAttribute('name', encodeURIComponent(name));
-                playerTd.setAttribute(DeviceTracker.AttributePlayerFullName, encodeURIComponent(playerFullName));
-                playerTd.setAttribute(DeviceTracker.AttributePlayerCodeName, encodeURIComponent(playerCodeName));
-                services.appendChild(playerTd);
-            });
+            const streamButton = document.createElement('button');
+            streamButton.className = 'action-button stream-button';
+            streamButton.title = 'Start stream';
+            streamButton.innerText = 'Start Stream';
+            streamButton.setAttribute(Attribute.UDID, device.udid);
+            streamButton.onclick = () => {
+                StreamClientScrcpy.getPlayers().forEach((playerClass) => {
+                    const { playerCodeName, playerFullName } = playerClass;
+                    const url = selectedInterfaceUrl;
+                    const action = ACTION.STREAM_SCRCPY;
+                    const params = {
+                        action,
+                        udid: device.udid,
+                        player: playerCodeName,
+                        ws: url,
+                    };
+                    const link = DeviceTracker.buildLink(params, playerFullName, this.params);
+                    if (link) {
+                        link.click();
+                    }
+                });
+            };
+            services.appendChild(streamButton);
         }
 
         tbody.appendChild(row);
