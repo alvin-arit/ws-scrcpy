@@ -91,9 +91,9 @@ export abstract class BasePlayer extends TypedEmitter<PlayerEvents> {
     public static playerCodeName = 'baseplayer';
     public static preferredVideoSettings: VideoSettings = new VideoSettings({
         lockedVideoOrientation: -1,
-        bitrate: 524288,
-        maxFps: 24,
-        iFrameInterval: 5,
+        bitrate: 8388608,
+        maxFps: 30,
+        iFrameInterval: 10,
         bounds: new Size(480, 480),
         sendFrameMeta: false,
     });
@@ -563,7 +563,14 @@ export abstract class BasePlayer extends TypedEmitter<PlayerEvents> {
     }
 
     public static getPreferredVideoSetting(): VideoSettings {
-        return this.preferredVideoSettings;
+        return new VideoSettings({
+            lockedVideoOrientation: -1,
+            bitrate: 8388608,
+            maxFps: 30,
+            iFrameInterval: 10,
+            bounds: new Size(480, 480),
+            sendFrameMeta: false,
+        });
     }
 
     public static saveVideoSettings(
