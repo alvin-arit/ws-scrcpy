@@ -3,11 +3,13 @@ import * as https from 'https';
 import path from 'path';
 import { Service } from './Service';
 import { Utils } from '../Utils';
-import express, { Express } from 'express';
+import express, { Express, Request, Response } from 'express';
 import { Config } from '../Config';
 import { TypedEmitter } from '../../common/TypedEmitter';
 import * as process from 'process';
 import { EnvName } from '../EnvName';
+import { ControlCenter } from '../goog-device/services/ControlCenter';
+import { ControlCenterCommand } from '../../common/ControlCenterCommand';
 
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
 
@@ -76,15 +78,46 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
 
     public async start(): Promise<void> {
         this.mainApp = express();
+        this.mainApp.use(express.json());
+
         if (HttpServer.SERVE_STATIC && HttpServer.PUBLIC_DIR) {
             this.mainApp.use(PATHNAME, express.static(HttpServer.PUBLIC_DIR));
 
             /// #if USE_WDA_MJPEG_SERVER
-
             const { MjpegProxyFactory } = await import('../mw/MjpegProxyFactory');
             this.mainApp.get('/mjpeg/:udid', new MjpegProxyFactory().proxyRequest);
             /// #endif
         }
+
+        this.mainApp.post('/devices/:udid/:command', async (req: Request, res: Response) => {
+            try {
+                const { udid, command } = req.params;
+                const controlCenter = ControlCenter.getInstance();
+                
+                const commandObj = new ControlCenterCommand();
+                const commandData = {
+                    id: Date.now(),
+                    type: command,
+                    data: {
+                        udid,
+                        command: req.body.command || command,
+                        ...req.body
+                    }
+                };
+                
+                const controlCommand = ControlCenterCommand.fromJSON(JSON.stringify(commandData));
+                
+                await controlCenter.runCommand(controlCommand);
+                
+                res.json({ success: true, message: `Command ${command} executed on device ${udid}` });
+            } catch (error: any) {
+                res.status(500).json({ 
+                    success: false, 
+                    error: error.message || 'Failed to execute command' 
+                });
+            }
+        });
+
         const config = Config.getInstance();
         config.servers.forEach((serverItem) => {
             const { secure, port, redirectToSecure } = serverItem;

@@ -175,7 +175,25 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
     }
 
     public getDevice(udid: string): Device | undefined {
-        return this.deviceMap.get(udid);
+        // First try direct lookup
+        const device = this.deviceMap.get(udid);
+        if (device) {
+            return device;
+        }
+
+        // If not found and looks like an IP address, try to find device by IP
+        if (udid.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
+            for (const [deviceId, device] of this.deviceMap.entries()) {
+                // Strip port from deviceId if it exists (format: IP:PORT)
+                const deviceIp = deviceId.split(':')[0];
+                console.log('Comparing:', deviceIp, udid);
+                if (deviceIp === udid) {
+                    return device;
+                }
+            }
+        }
+
+        return undefined;
     }
 
     public getId(): string {
@@ -199,8 +217,6 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
 
     public async runCommand(command: ControlCenterCommand): Promise<void> {
         const udid = command.getUdid();
-        
-        console.log(`Running command for device ${udid}:`, command.getType());
 
         if (command.getType() === ControlCenterCommand.RECONNECT_DEVICE) {
             console.log(`Attempting to reconnect device ${udid}`);
@@ -248,7 +264,8 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
                 const cmd = command.getCommand();
                 console.log(`Running command for device ${udid}:`, cmd);
                 try {
-                    await device.runShellCommandAdbKit(cmd);
+                    const result = await device.runShellCommandAdbKit(cmd);
+                    console.log(`Command result for device ${udid}:`, result);
                 } catch (error) {
                     console.error(`Failed to run command for device ${udid}:`, error);
                 }

@@ -87,6 +87,15 @@ current point
 * Copy to/from device clipboard
 * Device "rotation"
 
+#### Remote Commands
+You can send Android activity manager (am) commands to launch apps or perform other actions. For example, to launch YouTube TV:
+
+```shell
+curl -X POST http://localhost:8000/devices/10.0.1.99/run_command \
+  -H "Content-Type: application/json" \
+  -d '{"command": "am start com.google.android.youtube.tv"}'
+```
+
 #### File push
 Drag & drop an APK file to push it to the `/data/local/tmp` directory. You can
 install it manually from the included [xtermjs/xterm.js][xterm.js] terminal
