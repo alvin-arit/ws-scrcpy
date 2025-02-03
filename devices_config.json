@@ -1,0 +1,14 @@
+{
+    "devices": [
+        {
+            "id": "1",
+            "ip": "10.0.1.99:5555",
+            "name": "Nvidia Shield 1"
+        },
+        {
+            "id": "2",
+            "ip": "10.0.1.169:5555",
+            "name": "Nvidia Shield 2"
+        }
+    ]
+}

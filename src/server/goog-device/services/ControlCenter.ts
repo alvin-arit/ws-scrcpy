@@ -11,6 +11,8 @@ import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import { DeviceState } from '../../../common/DeviceState';
+import { ConfiguredDevicesManager } from './ConfiguredDevicesManager';
+import { spawn } from 'child_process';
 
 export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> implements Service {
     private static readonly defaultWaitAfterError = 1000;
@@ -23,12 +25,15 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
     private restartTimeoutId?: Timeout;
     private deviceMap: Map<string, Device> = new Map();
     private descriptors: Map<string, GoogDeviceDescriptor> = new Map();
+    private configuredDevicesManager: ConfiguredDevicesManager;
     private readonly id: string;
 
     protected constructor() {
         super();
         const idString = `goog|${os.hostname()}|${os.uptime()}`;
         this.id = crypto.createHash('md5').update(idString).digest('hex');
+        this.configuredDevicesManager = ConfiguredDevicesManager.getInstance();
+        this.configuredDevicesManager.on('configUpdate', this.onConfigUpdate);
     }
 
     public static getInstance(): ControlCenter {
@@ -52,6 +57,17 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
             this.waitAfterError *= 1.2;
             this.init();
         }, this.waitAfterError);
+    };
+
+    private onConfigUpdate = (): void => {
+        // Update all configured devices
+        const configuredDevices = this.configuredDevicesManager.getConfiguredDevices();
+        configuredDevices.forEach(device => {
+            const isConnected = this.deviceMap.has(device.ip);
+            const descriptor = this.configuredDevicesManager.createDeviceDescriptor(device, isConnected);
+            this.descriptors.set(device.ip, descriptor);
+            this.emit('device', descriptor);
+        });
     };
 
     private onChangeSet = (changes: TrackerChangeSet): void => {
@@ -78,6 +94,12 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
 
     private onDeviceUpdate = (device: Device): void => {
         const { udid, descriptor } = device;
+        // Check if this is a configured device and ensure we keep the configured name
+        const configuredDevices = this.configuredDevicesManager.getConfiguredDevices();
+        const configuredDevice = configuredDevices.find(d => d.ip === udid);
+        if (configuredDevice) {
+            descriptor['ro.product.model'] = configuredDevice.name;
+        }
         this.descriptors.set(udid, descriptor);
         this.emit('device', descriptor);
     };
@@ -91,6 +113,15 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
             device.on('update', this.onDeviceUpdate);
             this.deviceMap.set(udid, device);
         }
+
+        // Check if this is a configured device and update its status
+        const configuredDevices = this.configuredDevicesManager.getConfiguredDevices();
+        const configuredDevice = configuredDevices.find(d => d.ip === udid);
+        if (configuredDevice) {
+            const descriptor = this.configuredDevicesManager.createDeviceDescriptor(configuredDevice, state === DeviceState.DEVICE);
+            this.descriptors.set(udid, descriptor);
+            this.emit('device', descriptor);
+        }
     }
 
     public async init(): Promise<void> {
@@ -103,6 +134,16 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
             const { id, type } = device;
             this.handleConnected(id, type);
         });
+
+        // Initialize configured devices
+        const configuredDevices = this.configuredDevicesManager.getConfiguredDevices();
+        configuredDevices.forEach(device => {
+            const isConnected = this.deviceMap.has(device.ip);
+            const descriptor = this.configuredDevicesManager.createDeviceDescriptor(device, isConnected);
+            this.descriptors.set(device.ip, descriptor);
+            this.emit('device', descriptor);
+        });
+
         this.initialized = true;
     }
 
@@ -142,7 +183,7 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
     }
 
     public getName(): string {
-        return `aDevice Tracker [${os.hostname()}]`;
+        return `Android Debug Bridge Interface [${os.hostname()}]`;
     }
 
     public start(): Promise<void> {
@@ -153,15 +194,45 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
 
     public release(): void {
         this.stopTracker();
+        this.configuredDevicesManager.off('configUpdate', this.onConfigUpdate);
     }
 
     public async runCommand(command: ControlCenterCommand): Promise<void> {
         const udid = command.getUdid();
+        
+        console.log(`Running command for device ${udid}:`, command.getType());
+
+        if (command.getType() === ControlCenterCommand.RECONNECT_DEVICE) {
+            console.log(`Attempting to reconnect device ${udid}`);
+            return new Promise<void>((resolve, reject) => {
+                const adb = spawn('adb', ['connect', udid], { stdio: ['ignore', 'pipe', 'pipe'] });
+                
+                adb.stdout.on('data', (data) => {
+                    console.log(`[${udid}] stdout: ${data.toString().trim()}`);
+                });
+
+                adb.stderr.on('data', (data) => {
+                    console.error(`[${udid}] stderr: ${data.toString().trim()}`);
+                });
+
+                adb.on('error', (error: Error) => {
+                    console.error(`[${udid}] Failed to spawn adb process.\n${error.stack}`);
+                    reject(error);
+                });
+
+                adb.on('close', (code) => {
+                    console.log(`[${udid}] adb connect process exited with code ${code}`);
+                    resolve();
+                });
+            });
+        }
+
         const device = this.getDevice(udid);
         if (!device) {
             console.error(`Device with udid:"${udid}" not found`);
             return;
         }
+        
         const type = command.getType();
         switch (type) {
             case ControlCenterCommand.KILL_SERVER:
@@ -172,6 +243,15 @@ export class ControlCenter extends BaseControlCenter<GoogDeviceDescriptor> imple
                 return;
             case ControlCenterCommand.UPDATE_INTERFACES:
                 await device.updateInterfaces();
+                return;
+            case ControlCenterCommand.RUN_COMMAND:
+                const cmd = command.getCommand();
+                console.log(`Running command for device ${udid}:`, cmd);
+                try {
+                    await device.runShellCommandAdbKit(cmd);
+                } catch (error) {
+                    console.error(`Failed to run command for device ${udid}:`, error);
+                }
                 return;
             default:
                 throw new Error(`Unsupported command: "${type}"`);

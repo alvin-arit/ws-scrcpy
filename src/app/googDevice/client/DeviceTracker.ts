@@ -178,21 +178,35 @@ export class DeviceTracker extends BaseDeviceTracker<GoogDeviceDescriptor, never
         const isActive = device.state === DeviceState.DEVICE;
         let hasPid = false;
         const servicesId = `device_services_${fullName}`;
+        const reconnectButtonId = `reconnect_${Util.escapeUdid(device.udid)}`;
         const row = html`<div class="device ${isActive ? 'active' : 'not-active'}">
             <div class="device-header">
-                <div class="device-name">${device['ro.product.manufacturer']} ${device['ro.product.model']}</div>
+                <div class="device-name">${device['ro.product.model']}</div>
                 <div class="device-serial">${device.udid}</div>
-                <div class="device-version">
-                    <div class="release-version">${device['ro.build.version.release']}</div>
-                    <div class="sdk-version">${device['ro.build.version.sdk']}</div>
+                <div class="device-state-container">
+                    <div class="device-state" title="State: ${device.state}"></div>
+                    <button
+                        id="${reconnectButtonId}"
+                        class="action-button reconnect-button" 
+                        title="Try to reconnect"
+                        ${Attribute.UDID}="${device.udid}">
+                        Reconnect
+                    </button>
                 </div>
-                <div class="device-state" title="State: ${device.state}"></div>
             </div>
             <div id="${servicesId}" class="services"></div>
         </div>`.content;
+
         const services = row.getElementById(servicesId);
         if (!services) {
             return;
+        }
+
+        if (!isActive) {
+            const reconnectButton = row.getElementById(reconnectButtonId);
+            if (reconnectButton) {
+                reconnectButton.onclick = this.onReconnectButtonClick;
+            }
         }
 
         DeviceTracker.tools.forEach((tool) => {
@@ -342,6 +356,31 @@ export class DeviceTracker extends BaseDeviceTracker<GoogDeviceDescriptor, never
                 udid: device.udid,
                 store: false,
             });
+        }
+    }
+
+    private onReconnectButtonClick = (event: MouseEvent): void => {
+        const button = event.currentTarget as HTMLButtonElement;
+        const udid = button.getAttribute(Attribute.UDID);
+        
+        if (!udid) {
+            console.error('No UDID found for reconnect button');
+            return;
+        }
+        this.reconnectDevice(udid);
+    };
+
+    private reconnectDevice(udid: string): void {
+        const data: Message = {
+            id: this.getNextId(),
+            type: ControlCenterCommand.RECONNECT_DEVICE,
+            data: {
+                udid
+            }
+        };
+        
+        if (this.ws && this.ws.readyState === this.ws.OPEN) {
+            this.ws.send(JSON.stringify(data));
         }
     }
 

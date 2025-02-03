@@ -317,6 +317,9 @@ export class Device extends TypedEmitter<DeviceEvents> {
                 }
                 let changed = false;
                 Properties.forEach((propName: keyof GoogDeviceDescriptor) => {
+                    if (propName === 'ro.product.model') {
+                        return;
+                    }
                     if (props[propName] !== this.descriptor[propName]) {
                         changed = true;
                         (this.descriptor[propName] as any) = props[propName];

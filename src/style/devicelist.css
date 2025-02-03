@@ -233,3 +233,31 @@ body.list #device_list_menu {
     font-size: larger;
     font-weight: bolder;
 }
+
+.device-state-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reconnect-button {
+    padding: 4px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.reconnect-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.reconnect-button svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}

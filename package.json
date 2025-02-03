@@ -5,9 +5,10 @@
   "scripts": {
     "clean": "npx rimraf dist",
     "dist:dev": "webpack --config webpack/ws-scrcpy.dev.ts --stats-error-details",
-    "dist:prod": "webpack --config webpack/ws-scrcpy.prod.ts --stats-error-details",
+    "dist:prod": "webpack --config webpack/ws-scrcpy.prod.ts --stats-error-details && cp devices_config.json dist/ || true",
     "dist": "npm run dist:prod",
     "start": "npm run dist && cd dist && npm start",
+    "dev": "npm run dist:dev -- --watch & (cd dist && npm start)",
     "script:dist:start": "node ./index.js",
     "lint": "eslint src/ --ext .ts",
     "format": "eslint src/ --fix --ext .ts",

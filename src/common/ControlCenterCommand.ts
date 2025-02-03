@@ -7,6 +7,8 @@ export class ControlCenterCommand {
     public static CONFIGURE_STREAM = 'configure_stream';
     public static RUN_WDA = 'run-wda';
     public static REQUEST_WDA = 'request-wda';
+    public static RUN_COMMAND = 'run_command';
+    public static RECONNECT_DEVICE = 'reconnect_device';
 
     private id = -1;
     private type = '';
@@ -15,6 +17,7 @@ export class ControlCenterCommand {
     private method = '';
     private args?: any;
     private data?: any;
+    private command = '';
 
     public static fromJSON(json: string): ControlCenterCommand {
         const body = JSON.parse(json);
@@ -43,10 +46,17 @@ export class ControlCenterCommand {
                 command.method = data.method;
                 command.args = data.args;
                 return command;
+            case this.RUN_COMMAND:
+                if (typeof data.command !== 'string') {
+                    throw new Error('Invalid "command" value');
+                }
+                command.command = data.command;
+                return command;
             case this.START_SERVER:
             case this.UPDATE_INTERFACES:
             case this.CONFIGURE_STREAM:
             case this.RUN_WDA:
+            case this.RECONNECT_DEVICE:
                 return command;
             default:
                 throw new Error(`Unknown command "${body.command}"`);
@@ -73,5 +83,8 @@ export class ControlCenterCommand {
     }
     public getArgs(): any {
         return this.args;
+    }
+    public getCommand(): string {
+        return this.command;
     }
 }
