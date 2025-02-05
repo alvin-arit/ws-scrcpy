@@ -2,13 +2,53 @@
     "devices": [
         {
             "id": "1",
-            "ip": "10.0.1.99:5555",
+            "ip": "10.10.11.31:5555",
             "name": "Nvidia Shield 1"
         },
         {
             "id": "2",
-            "ip": "10.0.1.169:5555",
+            "ip": "10.10.11.32:5555",
             "name": "Nvidia Shield 2"
+        },
+        {
+            "id": "3",
+            "ip": "10.10.11.33:5555",
+            "name": "Nvidia Shield 3"
+        },
+        {
+            "id": "4",
+            "ip": "10.10.11.34:5555",
+            "name": "Nvidia Shield 4"
+        },
+        {
+            "id": "5",
+            "ip": "10.10.11.35:5555",
+            "name": "Nvidia Shield 5"
+        },
+        {
+            "id": "6",
+            "ip": "10.10.11.36:5555",
+            "name": "Nvidia Shield 6"
+        },
+        {
+            "id": "7",
+            "ip": "10.10.11.37:5555",
+            "name": "Nvidia Shield 7"
+        },
+        {
+            "id": "8",
+            "ip": "10.10.11.38:5555",
+            "name": "Nvidia Shield 8"
+        },
+        {
+            "id": "9",
+            "ip": "10.10.11.39:5555",
+            "name": "Nvidia Shield 9"
+        },
+        {
+            "id": "10",
+            "ip": "10.10.11.40:5555",
+            "name": "Nvidia Shield 10"
         }
     ]
 }

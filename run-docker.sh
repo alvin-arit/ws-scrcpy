@@ -10,6 +10,7 @@ docker build -t ws-scrcpy .
 # Run the container with proper volume mounts and USB access
 docker run -d \
     --name ws-scrcpy \
+    --restart always \
     -p 8000:8000 \
     --privileged \
     -v /dev/bus/usb:/dev/bus/usb \

@@ -28,14 +28,15 @@ COPY . .
 # Build the application
 RUN npm run dist
 
-# Create a symbolic link for devices_config.json to persist it
-RUN ln -sf /app/data/devices_config.json /app/dist/devices_config.json
-
 # Expose the default port
 EXPOSE 8000
 
 # Create volumes for persistent data
 VOLUME ["/root/.android", "/app/data"]
 
-# Start the application
+# Add an entrypoint script to handle config file
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["npm", "start"] 

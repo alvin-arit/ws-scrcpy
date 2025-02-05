@@ -283,6 +283,29 @@ The Docker setup maintains two persistent volumes:
 - `ws-scrcpy-adb`: Stores ADB keys and authentication data
 - `ws-scrcpy-data`: Stores your `devices_config.json` configuration
 
+#### Modifying devices_config.json
+
+To modify the `devices_config.json` configuration, you have two options:
+
+1. **From the host machine:**
+   ```bash
+   # Edit the file directly in the Docker volume
+   sudo nano $(docker volume inspect -f '{{ .Mountpoint }}' ws-scrcpy-data)/devices_config.json
+   
+   # After editing, restart the container to apply changes
+   docker restart ws-scrcpy
+   ```
+
+2. **From inside the container:**
+   ```bash
+   # Edit the file inside the container
+   docker exec -it ws-scrcpy nano /app/data/devices_config.json
+   
+   # Changes will be applied automatically
+   ```
+
+The configuration file is stored in the Docker volume and persists across container restarts. Any changes made to the file will be automatically picked up when the container restarts.
+
 ### USB Device Access
 
 The container is configured with USB device access, allowing it to detect and connect to Android devices plugged into your host machine. Make sure your devices have [USB debugging enabled](#requirements).
