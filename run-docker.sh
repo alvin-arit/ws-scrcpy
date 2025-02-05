@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Check for container engine (docker or podman)
-if command -v docker >/dev/null 2>&1; then
-    CONTAINER_ENGINE="docker"
-elif command -v podman >/dev/null 2>&1; then
+if command -v podman >/dev/null 2>&1; then
     CONTAINER_ENGINE="podman"
+elif command -v docker >/dev/null 2>&1; then
+    CONTAINER_ENGINE="docker"
 else
     echo "Error: Neither Docker nor Podman is installed. Please install one of them to continue."
     exit 1
