@@ -1,14 +1,26 @@
 #!/bin/bash
 
+# Check for container engine (docker or podman)
+if command -v docker >/dev/null 2>&1; then
+    CONTAINER_ENGINE="docker"
+elif command -v podman >/dev/null 2>&1; then
+    CONTAINER_ENGINE="podman"
+else
+    echo "Error: Neither Docker nor Podman is installed. Please install one of them to continue."
+    exit 1
+fi
+
+echo "Using container engine: $CONTAINER_ENGINE"
+
 # Create docker volumes if they don't exist
-docker volume create ws-scrcpy-adb
-docker volume create ws-scrcpy-data
+$CONTAINER_ENGINE volume create ws-scrcpy-adb
+$CONTAINER_ENGINE volume create ws-scrcpy-data
 
 # Build the docker image
-docker build -t ws-scrcpy .
+$CONTAINER_ENGINE build -t ws-scrcpy .
 
 # Run the container with proper volume mounts and USB access
-docker run -d \
+$CONTAINER_ENGINE run -d \
     --name ws-scrcpy \
     --restart always \
     -p 8000:8000 \
@@ -19,5 +31,5 @@ docker run -d \
     ws-scrcpy
 
 echo "Container started! Access the application at http://localhost:8000"
-echo "Your ADB keys are persisted in the 'ws-scrcpy-adb' volume"
-echo "Your devices_config.json is persisted in the 'ws-scrcpy-data' volume" 
+echo "Your ADB keys are persisted in the '${CONTAINER_ENGINE}-volume ws-scrcpy-adb' volume"
+echo "Your devices_config.json is persisted in the '${CONTAINER_ENGINE}-volume ws-scrcpy-data' volume" 

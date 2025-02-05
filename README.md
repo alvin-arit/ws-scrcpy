@@ -235,9 +235,15 @@ Currently, support of WebSocket protocol added to v1.19 of scrcpy
 [workers]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API
 [webcodecs]: https://w3c.github.io/webcodecs/
 
-## Docker
+## Docker/Podman
 
-You can run ws-scrcpy in a Docker container. This setup includes persistent storage for ADB keys and device configurations.
+You can run ws-scrcpy in a container using either Docker or Podman. This setup includes persistent storage for ADB keys and device configurations.
+
+### Requirements
+
+- Either Docker or Podman installed on your system
+- USB access for Android device connection
+- Root privileges for USB device access
 
 ### Quick Start
 
@@ -247,28 +253,31 @@ The easiest way to run the container is using the provided script:
 ./run-docker.sh
 ```
 
+The script will automatically detect whether you have Docker or Podman installed and use the appropriate container engine.
+
 This will:
-1. Create necessary Docker volumes for persistent data
-2. Build the Docker image
+1. Create necessary volumes for persistent data
+2. Build the container image
 3. Start the container with all required settings
 
 The application will be available at http://localhost:8000
 
 ### Manual Setup
 
-If you prefer to run the commands manually:
+If you prefer to run the commands manually (replace `docker` with `podman` if using Podman):
 
 ```bash
-# Create Docker volumes for persistent data
+# Create volumes for persistent data
 docker volume create ws-scrcpy-adb
 docker volume create ws-scrcpy-data
 
-# Build the Docker image
+# Build the image
 docker build -t ws-scrcpy .
 
 # Run the container
 docker run -d \
     --name ws-scrcpy \
+    --restart always \
     -p 8000:8000 \
     --privileged \
     -v /dev/bus/usb:/dev/bus/usb \
