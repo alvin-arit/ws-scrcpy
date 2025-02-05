@@ -234,3 +234,55 @@ Currently, support of WebSocket protocol added to v1.19 of scrcpy
 [webgl]: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
 [workers]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API
 [webcodecs]: https://w3c.github.io/webcodecs/
+
+## Docker
+
+You can run ws-scrcpy in a Docker container. This setup includes persistent storage for ADB keys and device configurations.
+
+### Quick Start
+
+The easiest way to run the container is using the provided script:
+
+```bash
+./run-docker.sh
+```
+
+This will:
+1. Create necessary Docker volumes for persistent data
+2. Build the Docker image
+3. Start the container with all required settings
+
+The application will be available at http://localhost:8000
+
+### Manual Setup
+
+If you prefer to run the commands manually:
+
+```bash
+# Create Docker volumes for persistent data
+docker volume create ws-scrcpy-adb
+docker volume create ws-scrcpy-data
+
+# Build the Docker image
+docker build -t ws-scrcpy .
+
+# Run the container
+docker run -d \
+    --name ws-scrcpy \
+    -p 8000:8000 \
+    --privileged \
+    -v /dev/bus/usb:/dev/bus/usb \
+    -v ws-scrcpy-adb:/root/.android \
+    -v ws-scrcpy-data:/app/data \
+    ws-scrcpy
+```
+
+### Persistent Data
+
+The Docker setup maintains two persistent volumes:
+- `ws-scrcpy-adb`: Stores ADB keys and authentication data
+- `ws-scrcpy-data`: Stores your `devices_config.json` configuration
+
+### USB Device Access
+
+The container is configured with USB device access, allowing it to detect and connect to Android devices plugged into your host machine. Make sure your devices have [USB debugging enabled](#requirements).

@@ -94,7 +94,6 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                 const { udid, command } = req.params;
                 const controlCenter = ControlCenter.getInstance();
                 
-                const commandObj = new ControlCenterCommand();
                 const commandData = {
                     id: Date.now(),
                     type: command,
