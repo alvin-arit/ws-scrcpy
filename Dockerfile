@@ -1,5 +1,8 @@
 # Use Node.js as the base image
-FROM node:18-bullseye
+FROM ubuntu:latest
+
+# Set noninteractive mode to avoid prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies including ADB and node-gyp requirements
 RUN apt-get update && apt-get install -y \
@@ -7,10 +10,12 @@ RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Create directory for ADB keys and config
-RUN mkdir -p /root/.android
+# RUN mkdir -p /root/.android
 RUN mkdir -p /app/data
 
 # Set working directory
@@ -30,9 +35,6 @@ RUN npm run dist
 
 # Expose the default port
 EXPOSE 8000
-
-# Create volumes for persistent data
-VOLUME ["/root/.android", "/app/data"]
 
 # Add an entrypoint script to handle config file
 COPY docker-entrypoint.sh /
