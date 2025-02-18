@@ -23,9 +23,10 @@ $CONTAINER_ENGINE run -d \
     --name scrcpy \
     --restart always \
     -p 8000:8000 \
-    scrcpy
     -v /opt/scrcpy/android:/root/.android \
     -v /opt/scrcpy/data:/app/data \
+    scrcpy
+
 
 echo "Container started! Access the application at http://localhost:8000"
 
