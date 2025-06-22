@@ -25,7 +25,7 @@ $CONTAINER_ENGINE run -d \
     -p 8000:8000 \
     -v /opt/adb-admin/android:/home/nextjs/.android \
     -v /opt/adb-admin/config/config.json:/app/devices_config.json \
-    adb-admin \
+    adb-admin
 
 echo "Container started! Access the application at http://localhost:8000"
 
