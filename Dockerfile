@@ -14,9 +14,13 @@ RUN apt-get update && apt-get install -y \
     npm \
     && rm -rf /var/lib/apt/lists/*
 
+# Create the same user as the other container
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nextjs
+
 # Create directory for ADB keys and config
-# RUN mkdir -p /root/.android
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data && \
+    chown -R nextjs:nodejs /app/data
 
 # Set working directory
 WORKDIR /app
@@ -33,12 +37,18 @@ COPY . .
 # Build the application
 RUN npm run dist
 
+# Change ownership of built files
+RUN chown -R nextjs:nodejs /app
+
 # Expose the default port
 EXPOSE 8000
 
 # Add an entrypoint script to handle config file
 COPY docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh && \
+    chown nextjs:nodejs /docker-entrypoint.sh
+
+USER nextjs
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["npm", "start"] 
